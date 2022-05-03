@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from "react";
-import VoxelEditor from "../VoxelEditor";
+import VoxelRenderer from "../VoxelRenderer";
 
 const Sandbox = () => {
 
     const canvasRef = useRef(null);
-    const voxelEditorRef = useRef(new VoxelEditor());
+    const voxelEditorRef = useRef(new VoxelRenderer());
 
     useEffect(() => {
 
@@ -12,7 +12,7 @@ const Sandbox = () => {
 
         voxelEditor.init(canvasRef.current)
 
-        const onResize = () => voxelEditor.resize()
+        const onResize = () => voxelEditor.updateSize()
 
         window.addEventListener('resize', onResize);
 
