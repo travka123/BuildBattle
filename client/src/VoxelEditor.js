@@ -1,5 +1,6 @@
 import VoxelViewer from "./VoxelViewer";
 import VoxelWorld from "./VoxelWorld";
+import * as THREE from 'three';
 
 class VoxelEditor {
 
@@ -18,6 +19,56 @@ class VoxelEditor {
     setCanvas(canvas) {
 
         this.voxelViewer.setCanvas(canvas);
+
+        var clickDate = Date.now();
+
+        const getCanvasRelativePosition = (event) => {
+            const rect = canvas.getBoundingClientRect();
+            console.log(event.clientX);
+            return {
+                x: (event.clientX - rect.left) * canvas.width  / rect.width,
+                y: (event.clientY - rect.top ) * canvas.height / rect.height,
+            };
+        }
+
+        const onClick = (event) => {
+            const pos = getCanvasRelativePosition(event);
+            const x = (pos.x / canvas.width ) *  2 - 1;
+            const y = (pos.y / canvas.height) * -2 + 1;
+
+            const start = new THREE.Vector3();
+            const end = new THREE.Vector3();
+            start.setFromMatrixPosition(this.voxelViewer.camera.matrixWorld);
+            end.set(x, y, 1).unproject(this.voxelViewer.camera);
+
+            const intersection = this.voxelWorld.intersectRay(start, end);
+            if (intersection) {
+
+                const pos = intersection.position.map((p, i) => {
+                    return Math.floor(p + 0.5 * intersection.normal[i]);
+                });
+
+                this.voxelWorld.setVoxel(pos[0], pos[1], pos[2], 1);
+
+                console.log(pos);
+                
+                this.voxelViewer.updateGeometry();
+            }
+        }
+
+        canvas.addEventListener('mousedown', () => {
+
+            clickDate = Date.now();   
+
+            console.log('md'); 
+        });
+
+        canvas.addEventListener('mouseup', (event) => {
+            if (Date.now() - clickDate < 200) {
+
+                onClick(event);
+            }
+        });
     }
 
     updateSize() {

@@ -28,6 +28,7 @@ class VoxelViewer {
         const controls = new OrbitControls(camera, canvas);
         controls.target.set(center, center, center);
         controls.update();
+        this.controls = controls;
 
         this.voxelRenderer.setCanvas(canvas);
 
@@ -38,7 +39,14 @@ class VoxelViewer {
 
     updateSize() {
 
+        this.controls.update();
+
         this.voxelRenderer.updateSize(this.camera);
+    }
+
+    updateGeometry() {
+
+        this.voxelRenderer.render(this.camera, true);
     }
 
 }
