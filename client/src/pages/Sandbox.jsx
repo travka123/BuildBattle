@@ -1,16 +1,16 @@
 import React, { useEffect, useRef } from "react";
-import VoxelRenderer from "../VoxelRenderer";
+import VoxelEditor from "../VoxelEditor";
 
 const Sandbox = () => {
 
     const canvasRef = useRef(null);
-    const voxelEditorRef = useRef(new VoxelRenderer());
+    const voxelEditorRef = useRef(new VoxelEditor());
 
     useEffect(() => {
 
         const voxelEditor = voxelEditorRef.current;
 
-        voxelEditor.init(canvasRef.current)
+        voxelEditor.setCanvas(canvasRef.current)
 
         const onResize = () => voxelEditor.updateSize()
 
