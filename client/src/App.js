@@ -1,9 +1,13 @@
 import React from "react";
+import { Route, Routes } from "react-router-dom";
+import Sandbox from "./pages/Sandbox";
 
 const App = () => {
   return (
     <div className="App">
-      Hello world!
+      <Routes>
+        <Route index element={<Sandbox />} />
+      </Routes>
     </div>
   );
 }
