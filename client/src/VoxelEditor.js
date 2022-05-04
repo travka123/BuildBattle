@@ -13,7 +13,8 @@ class VoxelEditor {
 
         this.voxelWorld.setVoxel(centerBlock, centerBlock, centerBlock, 1);
 
-        this.voxelViewer = new VoxelViewer(this.voxelWorld);
+        this.voxelViewer = new VoxelViewer();
+        this.voxelViewer.setWorld(this.voxelWorld);
     }
 
     setCanvas(canvas) {
@@ -36,12 +37,7 @@ class VoxelEditor {
             const x = (pos.x / canvas.width ) *  2 - 1;
             const y = (pos.y / canvas.height) * -2 + 1;
 
-            const start = new THREE.Vector3();
-            const end = new THREE.Vector3();
-            start.setFromMatrixPosition(this.voxelViewer.camera.matrixWorld);
-            end.set(x, y, 1).unproject(this.voxelViewer.camera);
-
-            const intersection = this.voxelWorld.intersectRay(start, end);
+            const intersection = this.voxelViewer.getBlockAt(x, y);
             if (intersection) {
 
                 const pos = intersection.position.map((p, i) => {
@@ -52,7 +48,7 @@ class VoxelEditor {
 
                 console.log(pos);
                 
-                this.voxelViewer.updateGeometry();
+                this.voxelViewer.setWorld(this.voxelWorld);
             }
         }
 
