@@ -1,76 +1,97 @@
 import VoxelViewer from "./VoxelViewer";
 import VoxelWorld from "./VoxelWorld";
-import * as THREE from 'three';
 
-class VoxelEditor {
+class VoxelEditor extends VoxelViewer {
 
-    constructor() {
+    constructor(canvas) {
 
-        this.cellSize = 33;
-        this.voxelWorld = new VoxelWorld(this.cellSize);
+        const cellSize = 33;
+        const voxelWorld = new VoxelWorld(cellSize);
+        const rootBlockColor = 1;
+        const center = Math.floor(cellSize / 2);
+        voxelWorld.setVoxel(center, center, center, rootBlockColor);
 
-        const centerBlock = Math.floor(this.voxelWorld.getCellSize() / 2);
+        super(canvas, voxelWorld);
 
-        this.voxelWorld.setVoxel(centerBlock, centerBlock, centerBlock, 1);
-
-        this.voxelViewer = new VoxelViewer();
-        this.voxelViewer.setWorld(this.voxelWorld);
+        canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+        canvas.addEventListener('mouseup', (e) => this.onMouseUp(e));
     }
 
-    setCanvas(canvas) {
+    onMouseDown() {
 
-        this.voxelViewer.setCanvas(canvas);
+        this.lastClickDate = Date.now();
+    }
 
-        var clickDate = Date.now();
+    onMouseUp(event) { 
 
-        const getCanvasRelativePosition = (event) => {
-            const rect = canvas.getBoundingClientRect();
-            console.log(event.clientX);
-            return {
-                x: (event.clientX - rect.left) * canvas.width  / rect.width,
-                y: (event.clientY - rect.top ) * canvas.height / rect.height,
-            };
+        if (Date.now() - this.lastClickDate < 200) {
+
+            this.onClick(event);
         }
+    }
 
-        const onClick = (event) => {
-            const pos = getCanvasRelativePosition(event);
-            const x = (pos.x / canvas.width ) *  2 - 1;
-            const y = (pos.y / canvas.height) * -2 + 1;
+    onClick(event) {
 
-            const intersection = this.voxelViewer.getBlockAt(x, y);
-            if (intersection) {
+        const {x, y} = this.getCanvasRelativePosition(event.offsetX, event.offsetY);
 
-                const pos = intersection.position.map((p, i) => {
-                    return Math.floor(p + 0.5 * intersection.normal[i]);
-                });
+        switch (event.button) {
 
-                this.voxelWorld.setVoxel(pos[0], pos[1], pos[2], 1);
+            case 0:
+                this.addBlock(x, y);
+                break;
 
-                console.log(pos);
-                
-                this.voxelViewer.setWorld(this.voxelWorld);
+            case 2:
+                this.removeBlock(x, y);
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    addBlock(canvasX, canvasY) {
+
+        const intersection = this.getBlockAt(canvasX, canvasY);
+
+        if (intersection) {
+
+            const position = intersection.position.map((p, i) => Math.floor(p + 0.5 * intersection.normal[i]));
+        
+            if (this.activeColorId) {
+
+                this.voxelWorld.setVoxel(...position, this.activeColorId);
+
+                this.update();
             }
         }
-
-        canvas.addEventListener('mousedown', () => {
-
-            clickDate = Date.now();   
-
-            console.log('md'); 
-        });
-
-        canvas.addEventListener('mouseup', (event) => {
-            if (Date.now() - clickDate < 200) {
-
-                onClick(event);
-            }
-        });
     }
 
-    updateSize() {
+    removeBlock(canvasX, canvasY) {
 
-        this.voxelViewer.updateSize();
+        const intersection = this.getBlockAt(canvasX, canvasY);
+
+        if (intersection) {
+
+            const position = intersection.position.map((p, i) => Math.floor(p - 0.5 * intersection.normal[i]));
+
+            const center = Math.floor(this.cellSize / 2);
+
+            if ((position[0] !== center) || (position[1] !== center) || (position[2] !== center)) {
+
+                this.voxelWorld.setVoxel(...position, 0);
+
+                this.update(); 
+            }     
+        }
     }
-}
+
+    setActiveColorId(colorId) {
+
+        if (colorId) {
+
+            this.activeColorId = colorId;
+        }
+    } 
+} 
 
 export default VoxelEditor;

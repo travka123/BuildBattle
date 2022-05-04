@@ -4,13 +4,12 @@ import VoxelEditor from "../VoxelEditor";
 const Sandbox = () => {
 
     const canvasRef = useRef(null);
-    const voxelEditorRef = useRef(new VoxelEditor());
 
     useEffect(() => {
 
-        const voxelEditor = voxelEditorRef.current;
+        const voxelEditor = new VoxelEditor(canvasRef.current);
 
-        voxelEditor.setCanvas(canvasRef.current)
+        voxelEditor.setActiveColorId(2);
 
         const onResize = () => voxelEditor.updateSize()
 

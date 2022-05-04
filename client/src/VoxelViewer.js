@@ -4,7 +4,18 @@ import createMeshFromWorld from "./utils/CreateMeshFromWorld";
 
 class VoxelViewer {
 
-    constructor() {
+    constructor(canvas, voxelWorld) {
+
+        this.renderer = new THREE.WebGLRenderer({canvas});
+        this.renderer.setSize(canvas.offsetWidth, canvas.offsetHeight, false);
+
+        const fov = 75;
+        const near = 0.1;
+        const far = 1000;
+        const aspect = canvas.offsetWidth / canvas.offsetHeight;
+        this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+
+        this.controls = new OrbitControls(this.camera, canvas);
 
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color('lightblue');
@@ -20,42 +31,23 @@ class VoxelViewer {
         addLight(-1,  2,  4);
         addLight( 1, -1, -2);
 
-        const fov = 75;
-        const near = 0.1;
-        const far = 1000;
-        const aspect = 2;
-        this.camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-    }
-
-    setWorld(world) {
-
-        this.voxelWorld = world;
-
-        if (this.mesh){
-            this.scene.remove(this.mesh);
-        }
-        
-        this.mesh = createMeshFromWorld(world);
-        this.scene.add(this.mesh);
-
-        this.render();
-    }
-
-    setCanvas(canvas) {
-
-        this.camera.aspect = canvas.offsetWidth / canvas.offsetHeight;
-        this.camera.updateProjectionMatrix();
-
-        this.controls = new OrbitControls(this.camera, canvas);
+        this.cellSize = voxelWorld.getCellSize();
+        this.voxelWorld = voxelWorld;
+        this.voxelWorldMesh = createMeshFromWorld(voxelWorld);
+        this.scene.add(this.voxelWorldMesh);
 
         this.resetCamera();
 
-        this.renderer = new THREE.WebGLRenderer({canvas});
-        this.renderer.setSize(canvas.offsetWidth, canvas.offsetHeight, false);
+        this.controls.addEventListener('change', () => this.render());
+    }
+
+    update() {
+
+        this.scene.remove(this.voxelWorldMesh);  
+        this.voxelWorldMesh = createMeshFromWorld(this.voxelWorld);
+        this.scene.add(this.voxelWorldMesh);
 
         this.render();
-
-        this.controls.addEventListener('change', () => this.render());
     }
 
     render = () => this.renderer?.render(this.scene, this.camera);
@@ -66,9 +58,9 @@ class VoxelViewer {
    
         if (this.voxelWorld) {
 
-            const center = Math.floor(this.voxelWorld.getCellSize() / 2) + 0.5;
-            camera.position.z = 40;
-            camera.position.x = 40;
+            const center = Math.floor(this.cellSize / 2) + 0.5;
+            camera.position.z = 30;
+            camera.position.x = 30;
             camera.position.y = 20;
             camera.lookAt(center, center, center);
 
@@ -78,6 +70,8 @@ class VoxelViewer {
                 controls.update();
             }
         }
+
+        this.render();
     }
 
     updateSize() {
@@ -98,14 +92,33 @@ class VoxelViewer {
 
     getBlockAt(x, y) {
 
+        const {renderer} = this;
+
+        const canvas = renderer.domElement;
+
+        const vx = (x / canvas.width ) *  2 - 1;
+        const vy = (y / canvas.height) * -2 + 1;
+
         const {camera, voxelWorld} = this;
 
         const start = new THREE.Vector3();
         const end = new THREE.Vector3();
         start.setFromMatrixPosition(camera.matrixWorld);
-        end.set(x, y, 1).unproject(camera);
+        end.set(vx, vy, 1).unproject(camera);
 
         return voxelWorld.intersectRay(start, end);
+    }
+
+    getCanvasRelativePosition = (x, y) => {
+
+        const {renderer} = this;
+
+        const canvas = renderer.domElement;
+        const rect = canvas.getBoundingClientRect();
+        return {
+            x: (x - rect.left) * canvas.width  / rect.width,
+            y: (y - rect.top ) * canvas.height / rect.height,
+        };
     }
 }
 

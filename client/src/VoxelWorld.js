@@ -74,7 +74,14 @@ class VoxelWorld {
 
     setVoxel(x, y, z, color) {
 
+        if (!this.isInCell(x, y, z)) {
+
+            return false;
+        }
+
         this.cell[this.getOffset(x, y, z)] = color;
+
+        return true;
     }
 
     getCellSize() {
