@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import colorById from './ColorById';
+import ColorPlate from './ColorPlate';
 
 function createMeshFromWorld(world) {
 
@@ -9,7 +10,8 @@ function createMeshFromWorld(world) {
 
     for (let i = 0; i < plateColors.length; i++) {
 
-        colors.push(...colorById(plateColors[i]));
+        const color = ColorPlate.colorsRGBGL[plateColors[i]];
+        colors.push(...color);
     }
 
     const geometry = new THREE.BufferGeometry();

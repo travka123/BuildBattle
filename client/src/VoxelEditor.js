@@ -7,9 +7,9 @@ class VoxelEditor extends VoxelViewer {
 
         const cellSize = 33;
         const voxelWorld = new VoxelWorld(cellSize);
-        const rootBlockColor = 1;
+        const rootBlockColor = 0;
         const center = Math.floor(cellSize / 2);
-        voxelWorld.setVoxel(center, center, center, rootBlockColor);
+        voxelWorld.setVoxel(center, center, center, rootBlockColor + 1);
 
         super(canvas, voxelWorld);
 
@@ -32,16 +32,14 @@ class VoxelEditor extends VoxelViewer {
 
     onClick(event) {
 
-        const {x, y} = this.getCanvasRelativePosition(event.offsetX, event.offsetY);
-
         switch (event.button) {
 
             case 0:
-                this.addBlock(x, y);
+                this.addBlock(event.offsetX, event.offsetY);
                 break;
 
             case 2:
-                this.removeBlock(x, y);
+                this.removeBlock(event.offsetX, event.offsetY);
                 break;
 
             default:
@@ -57,12 +55,9 @@ class VoxelEditor extends VoxelViewer {
 
             const position = intersection.position.map((p, i) => Math.floor(p + 0.5 * intersection.normal[i]));
         
-            if (this.activeColorId) {
+            this.voxelWorld.setVoxel(...position, this.activeColorId + 1);
 
-                this.voxelWorld.setVoxel(...position, this.activeColorId);
-
-                this.update();
-            }
+            this.update();
         }
     }
 
@@ -87,11 +82,8 @@ class VoxelEditor extends VoxelViewer {
 
     setActiveColorId(colorId) {
 
-        if (colorId) {
-
-            this.activeColorId = colorId;
-        }
-    } 
+        this.activeColorId = colorId;
+    }
 } 
 
 export default VoxelEditor;

@@ -32,7 +32,7 @@ class VoxelWorld {
 
                                     positions.push(x + pos[0], y + pos[1], z + pos[2]);
                                     normals.push(...dir);
-                                    plateColors.push(voxel);
+                                    plateColors.push(voxel - 1);
                                 }
                                 
                                 indices.push(
