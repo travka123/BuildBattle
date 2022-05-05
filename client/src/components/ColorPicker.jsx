@@ -22,7 +22,7 @@ const ColorPicker = ({style, onColorChange}) => {
     }, [onColorChange]);
 
     return (
-        <div className="d-flex flex-row" style={{background: 'rgba(0, 0, 0, 0.4)', borderRadius: '5px', ...style}}>
+        <div className="d-flex flex-row flex-wrap" style={{background: 'rgba(0, 0, 0, 0.4)',maxWidth: '40%', borderRadius: '5px', ...style}}>
 
             {ColorPlate.colorsRGB.map((rgb, id) => 
                 

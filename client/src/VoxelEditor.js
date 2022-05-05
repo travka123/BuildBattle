@@ -55,9 +55,14 @@ class VoxelEditor extends VoxelViewer {
 
             const position = intersection.position.map((p, i) => Math.floor(p + 0.5 * intersection.normal[i]));
         
-            this.voxelWorld.setVoxel(...position, this.activeColorId + 1);
+            if (this.activeColorId !== undefined) {
 
-            this.update();
+                this.voxelWorld.setVoxel(...position, this.activeColorId + 1);
+
+                this.update();
+
+                console.log(`Block added. ColorId=${this.activeColorId} Position=${position}`);
+            }
         }
     }
 
@@ -75,7 +80,9 @@ class VoxelEditor extends VoxelViewer {
 
                 this.voxelWorld.setVoxel(...position, 0);
 
-                this.update(); 
+                this.update();
+
+                console.log(`Block removed. Position=${position}`);
             }     
         }
     }
