@@ -4,9 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Auth;
 using Server.Data;
+using Server.Data.Models;
 using System.Security.Claims;
-
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -60,9 +59,36 @@ app.MapPost("/signin", async ([FromBody] SignInData signInData, [FromServices] A
     return Results.Ok(AuthHelper.CreateToken(user.Login));
 });
 
+app.MapPost("/signup", async ([FromBody] SignUpData signUpData, [FromServices] AppDbContext dbContext) => {
+
+    if ((signUpData.login.Length <= 3) || 
+        (signUpData.password.Length <= 3)) {
+
+        return Results.BadRequest();
+    }
+
+    var user = new User() { 
+        Login = signUpData.login,
+        Password = signUpData.password,
+    };
+
+    try {
+
+        dbContext.Add(user);
+        await dbContext.SaveChangesAsync();
+    } 
+    catch (DbUpdateException) {
+
+        return Results.Conflict();
+    }
+
+    return Results.Ok(AuthHelper.CreateToken(user.Login));
+});
+
 AppDbContext.Refresh(connectionString);
 AppDbContext.Fill(connectionString);
 
 app.Run();
 
 record SignInData(string login, string password);
+record SignUpData(string login, string password);

@@ -33,34 +33,35 @@ const SignIn = () => {
     return (
         <div className="SignIn">
             <div style={{width: '100vw', height: '100vh', backgroundColor: 'lightblue', overflow: 'hidden'}}>
-                <div className="card" style={{width: '400px', margin: 'auto', marginTop: '20vh'}}>
-                    <div className="card-body">
+                <div style={{width: '400px', margin: 'auto', marginTop: '20vh'}}>
+                    <div className="card">
+                        <div className="card-body">
 
-                        <h2>Sign in:</h2>
+                            <h2>Sign in:</h2>
 
-                        <div className="mt-3">
-                            Login:
-                            <div>
-                                <input value={login} onChange={(e) => setLogin(e.target.value)} className="w-100" />
+                            <div className="mt-3">
+                                Login:
+                                <div>
+                                    <input value={login} onChange={(e) => setLogin(e.target.value)} className="w-100" />
+                                </div>
                             </div>
-                        </div>
 
-                        <div className="mt-2">
-                            Password:
-                            <div>
-                                <input value={password} onChange={(e) => setPassword(e.target.value)} className="w-100" />
+                            <div className="mt-2">
+                                Password:
+                                <div>
+                                    <input value={password} onChange={(e) => setPassword(e.target.value)} className="w-100" />
+                                </div>
                             </div>
+
+                            <button className="btn btn-primary btn-block mt-3 mb-1 me-2" onClick={submit}>Sign in</button>
+
+                            <button className="btn btn-secondary btn-block mt-3 mb-1 me-2" onClick={() => navigate('/signup', {replace: true})}>Sign up</button>
+
                         </div>
-
-                        {fail ? 
-                        <div className="mt-4 alert alert-danger" role='alert'>{fail}</div> :
-                        ''}
-
-                        <button className="btn btn-primary btn-block mt-3 mb-1 me-2" onClick={submit}>Sign in</button>
-
-                        <button className="btn btn-secondary btn-block mt-3 mb-1 me-2" onClick={() => navigate('/signup', {replace: true})}>Sign up</button>
-
                     </div>
+                    {fail ? 
+                        <div className="mt-4 alert alert-danger" role='alert'>{fail}</div> :
+                        ''}               
                 </div>
             </div>
         </div>
