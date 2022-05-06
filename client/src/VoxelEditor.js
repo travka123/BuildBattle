@@ -57,11 +57,12 @@ class VoxelEditor extends VoxelViewer {
         
             if (this.activeColorId !== undefined) {
 
-                this.voxelWorld.setVoxel(...position, this.activeColorId + 1);
+                if (this.voxelWorld.setVoxel(...position, this.activeColorId + 1)) {
 
-                this.update();
+                    this.update();
 
-                console.log(`Block added. ColorId=${this.activeColorId} Position=${position}`);
+                    this.callEvent('onAdd', position, this.activeColorId);                
+                }            
             }
         }
     }
@@ -78,14 +79,35 @@ class VoxelEditor extends VoxelViewer {
 
             if ((position[0] !== center) || (position[1] !== center) || (position[2] !== center)) {
 
-                this.voxelWorld.setVoxel(...position, 0);
+                if (this.voxelWorld.setVoxel(...position, 0)) {
 
-                this.update();
+                    this.update();
 
-                console.log(`Block removed. Position=${position}`);
+                    this.callEvent('onRemove', position);
+                }
             }     
         }
     }
+
+    handlers = {onAdd: [], onRemove: []};
+
+    addEventListener(type, handler) {
+
+        this.handlers[type].push(handler);
+    }
+
+    removeEventListner(type, handler) {
+
+        this.handlers[type] = this.handlers[type].filter((h) => h !== handler);
+    }
+
+    callEvent(type, ...args) {
+
+        for (let handler of this.handlers[type]) {
+
+            handler(...args);
+        }
+    } 
 
     setActiveColorId(colorId) {
 

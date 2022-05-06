@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import ColorPicker from "./ColorPicker";
 import VoxelEditor from "../VoxelEditor";
 
-const Editor = ({style}) => {
+const Editor = ({style, onBlockAdd, onBlockRemove}) => {
 
     const voxelEditorRef = useRef(null);
 
@@ -13,6 +13,32 @@ const Editor = ({style}) => {
         voxelEditorRef.current = new VoxelEditor(canvasRef.current);
 
     }, []);
+
+    useEffect(() => {
+
+        if (onBlockAdd)
+            voxelEditorRef.current.addEventListener('onAdd', onBlockAdd);
+
+        return () => {
+
+            if (onBlockAdd)
+                voxelEditorRef.current.removeEventListner('onAdd', onBlockAdd);
+        }
+
+    }, [onBlockAdd]);
+
+    useEffect(() => {
+
+        if (onBlockRemove)
+            voxelEditorRef.current.addEventListener('onRemove', onBlockRemove);
+
+        return () => {
+
+            if (onBlockRemove)
+                voxelEditorRef.current.removeEventListner('onRemove', onBlockRemove);
+        }
+
+    }, [onBlockRemove]);
 
     useEffect(() => {
 
