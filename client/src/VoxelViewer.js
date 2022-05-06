@@ -6,7 +6,7 @@ class VoxelViewer {
 
     constructor(canvas, voxelWorld) {
 
-        this.renderer = new THREE.WebGLRenderer({canvas});
+        this.renderer = new THREE.WebGLRenderer({canvas: canvas, antialias: true});
         this.renderer.setSize(canvas.offsetWidth, canvas.offsetHeight, false);
 
         const fov = 75;
@@ -20,16 +20,14 @@ class VoxelViewer {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color('lightblue');
 
-        const addLight = (x, y, z) => {
-            const color = 0xFFFFFF;
-            const intensity = 1;
-            const light = new THREE.DirectionalLight(color, intensity);
-            light.position.set(x, y, z);
-            this.scene.add(light);
-        }
+        const ambientLightColor = 0x777777;
+        const ambientLight = new THREE.AmbientLight(ambientLightColor);
+        this.scene.add(ambientLight);
 
-        addLight(-1,  2,  4);
-        addLight( 1, -1, -2);
+        const cameraLightColor = 0x888888;
+        const cameraLightIntensity = 1;
+        this.cameraLight = new THREE.DirectionalLight(cameraLightColor, cameraLightIntensity);
+        this.scene.add(this.cameraLight);
 
         this.cellSize = voxelWorld.getCellSize();
         this.voxelWorld = voxelWorld;
@@ -50,7 +48,15 @@ class VoxelViewer {
         this.render();
     }
 
-    render = () => this.renderer?.render(this.scene, this.camera);
+    render = () => {
+
+        const cameraPosition = this.camera.position;
+        const center = this.controls.target;
+
+        this.cameraLight.position.set(cameraPosition.x - center.x, cameraPosition.y - center.y, cameraPosition.z - center.z);
+
+        this.renderer?.render(this.scene, this.camera)
+    }
 
     resetCamera() {
 

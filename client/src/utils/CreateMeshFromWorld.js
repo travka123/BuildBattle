@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import colorById from './ColorById';
 import ColorPlate from './ColorPlate';
 
 function createMeshFromWorld(world) {
@@ -15,7 +14,7 @@ function createMeshFromWorld(world) {
     }
 
     const geometry = new THREE.BufferGeometry();
-    const material = new THREE.MeshLambertMaterial({vertexColors: true});
+    const material = new THREE.MeshPhongMaterial({vertexColors: true});
 
     const positionNumComponents = 3;
     const normalNumComponents = 3;
