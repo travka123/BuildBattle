@@ -6,11 +6,15 @@ using Server.Auth;
 using Server.Data;
 using System.Security.Claims;
 
+
+
 var builder = WebApplication.CreateBuilder(args);
+
+string connectionString = builder.Configuration.GetConnectionString("BuildBattleConStr");
 
 // Add services to the container.
 
-string connectionString = builder.Configuration.GetConnectionString("BuildBattleConStr");
+builder.Services.AddCors();
 
 builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(connectionString));
 
@@ -22,6 +26,8 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+
+app.UseCors(builder => builder.WithOrigins("http://localhost:3000").AllowAnyMethod().AllowAnyHeader().AllowCredentials());
 
 app.UseAuthentication();
 app.UseAuthorization();
