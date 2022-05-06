@@ -52,7 +52,7 @@ const Editor = ({style, onBlockAdd, onBlockRemove}) => {
 
     return (
         <div className="Editor">
-            <div className="overflow-hidden" style={style}>
+            <div className="overflow-hidden" style={{userSelect: 'none', ...style}}>
 
                 <ColorPicker style={{position: 'absolute', top: '40px', left: '20px'}} onColorChange={(id) => {voxelEditorRef.current?.setActiveColorId(id)}}/> 
 
