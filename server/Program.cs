@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Server.Auth;
 using Server.Data;
 using Server.Data.Models;
+using Server.Game;
 using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,10 +16,27 @@ string connectionString = builder.Configuration.GetConnectionString("BuildBattle
 
 builder.Services.AddCors();
 
+builder.Services.AddSignalR();
+
 builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(connectionString));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(opt => opt.TokenValidationParameters = AuthHelper.TokenValidationParameters);
+    .AddJwtBearer((opt) => {
+
+        opt.TokenValidationParameters = AuthHelper.TokenValidationParameters;
+        opt.Events = new JwtBearerEvents() {
+            OnMessageReceived = (context) => {
+
+                var accessToken = context.Request.Query["access_token"];
+                if (!string.IsNullOrEmpty(accessToken)) {
+
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
+        };
+    });
 
 builder.Services.AddAuthorization();
 
@@ -56,7 +74,7 @@ app.MapPost("/signin", async ([FromBody] SignInData signInData, [FromServices] A
         return Results.Unauthorized();
     }
 
-    return Results.Ok(AuthHelper.CreateToken(user.Login));
+    return Results.Ok(new { jwt = AuthHelper.CreateToken(user.Login) });
 });
 
 app.MapPost("/signup", async ([FromBody] SignUpData signUpData, [FromServices] AppDbContext dbContext) => {
@@ -82,8 +100,10 @@ app.MapPost("/signup", async ([FromBody] SignUpData signUpData, [FromServices] A
         return Results.Conflict();
     }
 
-    return Results.Ok(AuthHelper.CreateToken(user.Login));
+    return Results.Ok(new { jwt = AuthHelper.CreateToken(user.Login) });
 });
+
+app.MapHub<GameHub>("/game");
 
 AppDbContext.Refresh(connectionString);
 AppDbContext.Fill(connectionString);

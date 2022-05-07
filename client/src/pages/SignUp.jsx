@@ -36,11 +36,11 @@ const SignUp = () => {
         if (pass) {
             (async () => {
 
-                const {status} = await ServerApi.signup(login, password);
+                const {status, token} = await ServerApi.signup(login, password);
 
                 if (status === 200) {
 
-                    localStorage.setItem('jwt', status.token);
+                    localStorage.setItem('jwt', token);
 
                     navigate('/', {replace : true})
                 }

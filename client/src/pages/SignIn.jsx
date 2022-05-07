@@ -19,7 +19,7 @@ const SignIn = () => {
 
             if (result.status === 200) {
 
-                localStorage.setItem('jwt', result.text);
+                localStorage.setItem('jwt', result.token);
 
                 navigate('/', {replace: true});
             }
