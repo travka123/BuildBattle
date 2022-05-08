@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Server.Game.Messages;
 using System.Collections.Concurrent;
 
 namespace Server.Game;
@@ -10,9 +11,18 @@ public class GameHub : Hub {
     private enum ClientState { None, Waiting };
 
     private static readonly Dictionary<string, string> _verifiedConnections = new();
-    private readonly object _verifyLock = new object();
+    private static readonly object _verifyLock = new object();
+
+    private BlockingCollection<GameMessage> _messageQueue;
+
+    public GameHub(IGameMessageQueue messageQueue) {
+
+        _messageQueue = messageQueue.MessageQueue;
+    }
 
     public override async Task OnConnectedAsync() {
+
+        await base.OnConnectedAsync();
 
         bool verified = false;
 
@@ -30,14 +40,12 @@ public class GameHub : Hub {
 
         if (verified) {
 
-            await OnVerifiedConnectedAsync();
+            _messageQueue.Add(new PlayerConnectedMessage(Context.ConnectionId, login));
         }
         else {
 
             Context.Abort();
         }
-
-        await base.OnConnectedAsync();
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception) {
@@ -53,7 +61,7 @@ public class GameHub : Hub {
 
         if (verified) {
 
-            await OnVerifiedDisconnectedAsync(exception);
+           _messageQueue.Add(new PlayerDisconnectedMessage(Context.ConnectionId));
         }
 
         if (verified) {
@@ -65,12 +73,13 @@ public class GameHub : Hub {
         }
 
         await base.OnDisconnectedAsync(exception);
-    }
+    } 
 
-    private async Task OnVerifiedConnectedAsync() {
-    }
-
-    private async Task OnVerifiedDisconnectedAsync(Exception? exception) {
-    }
+    private static readonly ConcurrentDictionary<string, Status> _states = new();
 }
+
+public enum Status { Nonde, Waiting }
+
+public record State(Status Status);
+
 

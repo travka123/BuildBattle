@@ -27,6 +27,7 @@ public class AppDbContext : DbContext {
         using (var db = new AppDbContext(optb.Options)) {
 
             db.Users.Add(new User() { Login = "user123", Password = "123" });
+            db.Users.Add(new User() { Login = "user222", Password = "222" });
 
             db.SaveChanges();
         }

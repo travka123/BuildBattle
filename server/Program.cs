@@ -40,6 +40,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddSingleton<IGameMessageQueue, GameMessageQueue>();
+
+builder.Services.AddHostedService<GameService>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
