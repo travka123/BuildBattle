@@ -1,3 +1,3 @@
 ﻿namespace Server.Game;
 
-public record PlayerInfo(string Login, List<string>? group = null);
+public record PlayerInfo(string state, string Login, List<string>? Group = null);

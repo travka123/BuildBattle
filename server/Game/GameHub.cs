@@ -73,7 +73,21 @@ public class GameHub : Hub {
         }
 
         await base.OnDisconnectedAsync(exception);
-    } 
+    }
+
+    public async Task BlockAdd(int x, int y, int z, int colorId) {
+
+        _messageQueue.Add(new BlockAddMessage(Context.ConnectionId, x, y, z, colorId));
+
+        await Task.CompletedTask;
+    }
+
+    public async Task BlockRemove(int x, int y, int z) {
+
+        _messageQueue.Add(new BlockRemoveMessage(Context.ConnectionId, x, y, z));
+
+        await Task.CompletedTask;
+    }
 
     private static readonly ConcurrentDictionary<string, Status> _states = new();
 }

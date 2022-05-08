@@ -16,7 +16,7 @@ string connectionString = builder.Configuration.GetConnectionString("BuildBattle
 
 builder.Services.AddCors();
 
-builder.Services.AddSignalR();
+builder.Services.AddSignalR(opt => opt.EnableDetailedErrors = true);
 
 builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(connectionString));
 
