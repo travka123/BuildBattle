@@ -72,14 +72,14 @@ class VoxelWorld {
         return this.isInCell(x, y, z) ? cell[this.getOffset(x, y, z)] : 0;
     }
 
-    setVoxel(x, y, z, color) {
+    setVoxel(x, y, z, value) {
 
         if (!this.isInCell(x, y, z)) {
 
             return false;
         }
 
-        this.cell[this.getOffset(x, y, z)] = color;
+        this.cell[this.getOffset(x, y, z)] = value;
 
         return true;
     }

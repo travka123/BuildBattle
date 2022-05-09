@@ -89,7 +89,15 @@ public class GameHub : Hub {
         await Task.CompletedTask;
     }
 
-    private static readonly ConcurrentDictionary<string, Status> _states = new();
+    public async Task Evaluated(string playerLogin, int score) {
+
+        if ((score > 0) && (score <= 5)) {
+
+            _messageQueue.Add(new EvaluatedMessage(Context.ConnectionId, playerLogin, score));
+        }
+
+        await Task.CompletedTask;
+    }
 }
 
 public enum Status { Nonde, Waiting }

@@ -2,19 +2,29 @@ import { useEffect, useRef, useState } from "react";
 import * as signalR from '@microsoft/signalr';
 import Waiting from "../pages/Waiting";
 import Editor from "./Editor";
+import Viewer from "./Viewer";
+import EvaluationBar from "./EvaluationBar";
 
 const GameController = ({jwt}) => {
 
     const [state, setState] = useState('');
 
     const [self, setSelf] = useState('');
+    const [players, setPlayers] = useState(null);
 
     const [currentConnected, setCurrentConnected] = useState('');
     const [targetConnected, setTargetConnected] = useState('');
 
     const [timeLeft, setTimeLeft] = useState(0);
+    
+    const [worlds, setWorlds] = useState(null);
+    const worldsRef = useRef();
 
     const connectionRef = useRef(null);
+
+    const [currentEvaluating, setCurrentEvaluating] = useState(0);
+
+    const [winner, setWinner] = useState('');
 
     useEffect(() => {
 
@@ -59,17 +69,58 @@ const GameController = ({jwt}) => {
 
             connection.on("SetPlayers", (players) => {
 
+                setPlayers(players);
+
+                const worlds = {};
+
+                for (const player of players) {
+
+                    worlds[player] = [];
+                }
+
+                worldsRef.current = worlds;
+                setWorlds(worlds);
+
                 console.log(players);
+                console.log(worlds);
             });
 
             connection.on("BlockAdd", (playerName, x, y, z, colorId) => {
+
+                const worlds = worldsRef.current;
+
+                if (worlds) {
+
+                    worlds[playerName].push([x, y, z, colorId]);
+                    setWorlds(worlds);
+
+                    console.log(worlds);
+                }
 
                 console.log("Add", playerName, x, y, z, colorId);
             });
 
             connection.on("BlockRemove", (playerName, x, y, z) => {
 
+                let worlds = worldsRef.current;
+
+                if (worlds) {
+
+                    worlds[playerName] = worlds[playerName].filter((block) => (block[0] !== x) || (block[1] !== y) || (block[2]) !== z)
+                    setWorlds(worldsRef.current);
+
+                    console.log(worlds);
+                }
+
                 console.log("Remove", playerName, x, y, z);
+            });
+
+            connection.on("SetWinner", (winner) => {
+
+                setWinner(winner);
+                setState('ended');
+
+                console.log(winner);
             });
 
             await connection.start();
@@ -100,14 +151,58 @@ const GameController = ({jwt}) => {
         }
     }
 
+    const showNext = () => {
+        if (currentEvaluating + 1 < players.length)
+            setCurrentEvaluating(currentEvaluating + 1);
+    }
+
+    const showPrevious = () => {
+        if (currentEvaluating > 0)
+            setCurrentEvaluating(currentEvaluating - 1);
+    }
+
+    const [marks, setMarks] = useState({});
+
+    const evaluated = (value) => {
+        
+        const nmarks = {...marks};
+
+        nmarks[players[currentEvaluating]] = value;
+
+        const connection = connectionRef.current;
+        if (connection) {
+
+            connection.invoke("Evaluated", players[currentEvaluating], value);
+        }
+
+        setMarks(nmarks);
+    }
+
     return (
         <div className="GameController">
 
-            {state === 'waiting' ? <Waiting current={currentConnected} target={targetConnected}/> :
+            {
+                state === 'waiting' ? <Waiting current={currentConnected} target={targetConnected}/> :
                 state === 'building' ? <Editor onBlockAdd={onBlockAdd} onBlockRemove={onBlockRemove} style={{width: '100vw', height: '100vh'}} /> :
+                state === 'evaluation' ? 
+                    <div>
+                        <Viewer blocks={worlds[players[currentEvaluating]]} style={{width: '100vw', height: '100vh'}}/>
+                        <button onClick={showNext} style={{position: 'absolute', bottom: '40px', right: '40px'}}>NEXT</button>
+                        <button onClick={showPrevious} style={{position: 'absolute', bottom: '40px', left: '40px'}}>PREV</button>
+                        {players[currentEvaluating] !== self ? 
+                            <EvaluationBar rating={marks[players[currentEvaluating]]} setSelected={evaluated} style={{position: 'absolute', top: '40px', left: '40px'}}/> :
+                            null}
+                        <h2 style={{position: 'absolute', top: '150px', left: '40px'}}>{players[currentEvaluating]}</h2>
+                    </div> :
+                state === 'ended' ? 
+                    <div>
+                        <Viewer blocks={worlds[winner]} style={{width: '100vw', height: '100vh'}}/>
+                        <div style={{position: 'absolute', top: '40px', left: '50%', transform: 'translateX(-50%)'}}><h3>WINNER</h3></div>
+                        <div style={{position: 'absolute', top: '80px', left: '50%', transform: 'translateX(-50%)'}}><h2>{winner}</h2></div>
+                    </div> :
                 <div style={{width: '100vw', height: '100vh', backgroundColor: 'lightblue', overflow: 'hidden'}}/>}
 
-            {timeLeft ? <h2 style={{position: 'absolute', bottom: '40px', left: '20px'}}>{self}, {timeLeft}</h2> :null}
+            {timeLeft ? <h2 style={{position: 'absolute', top: '40px', right: '40px'}}>{timeLeft}</h2> :null}
 
         </div>
     );

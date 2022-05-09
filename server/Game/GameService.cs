@@ -6,8 +6,9 @@ namespace Server.Game;
 
 public class GameService : BackgroundService {
 
-    public const int GROUP_SIZE = 2;
-    const int BUILDING_TIME = 15;
+    public const int GROUP_SIZE = 1;
+    const int BUILDING_TIME = 2;
+    const int EVALUATING_TIME = 2;
 
     private IHubContext<GameHub> _hubContext;
     private BlockingCollection<GameMessage> _messageQueue;
@@ -40,24 +41,32 @@ public class GameService : BackgroundService {
 
         switch (message) {
 
-            case PlayerConnectedMessage pcm:
-                HandlePlayerConnected(pcm, stoppingToken);
+            case PlayerConnectedMessage dmes:
+                HandlePlayerConnected(dmes, stoppingToken);
                 break;
 
-            case PlayerDisconnectedMessage pdm:
-                HandlePlayerDisconnected(pdm, stoppingToken);
+            case PlayerDisconnectedMessage dmes:
+                HandlePlayerDisconnected(dmes, stoppingToken);
                 break;
 
-            case BlockAddMessage bam:
-                HandleBlockAdd(bam);
+            case BlockAddMessage dmes:
+                HandleBlockAdd(dmes);
                 break;
 
-            case BlockRemoveMessage brm:
-                HandleBlockRemoved(brm);
+            case BlockRemoveMessage dmes:
+                HandleBlockRemoved(dmes);
                 break;
 
-            case BuildingEndMessage bem:
-                HandleBuildingEnd(bem);
+            case StageEndMessage dmes when dmes.Stage == "building":
+                HandleBuildingEnd(dmes, stoppingToken);
+                break;
+
+            case EvaluatedMessage dmes:
+                HandleEvaluated(dmes);
+                break;
+
+            case StageEndMessage dmes when dmes.Stage == "evaluating":
+                HandleEvaluatingEnd(dmes);
                 break;
         }
     }
@@ -80,9 +89,9 @@ public class GameService : BackgroundService {
 
     private void HandlePlayerDisconnected(PlayerDisconnectedMessage message, CancellationToken stoppingToken) {
 
-        _playersInfo.Remove(message.playerId, out PlayerInfo? info);
+        _playersInfo.TryGetValue(message.playerId, out PlayerInfo? info);
 
-        if ((info is not null) && (info.Group is null)) {
+        if ((info is not null) && (info.State == "waiting")) {
 
             _waitingPlayers.Remove(message.playerId);
 
@@ -122,7 +131,7 @@ public class GameService : BackgroundService {
 
         var logins = new List<string>();
 
-        foreach(var (clientId, info) in groupPlayersInfo) {
+        foreach (var (clientId, info) in groupPlayersInfo) {
 
             _hubContext.Clients.Client(clientId).SendAsync("SetOwnName", info.Login);
 
@@ -137,7 +146,7 @@ public class GameService : BackgroundService {
 
             if (!stoppingToken.IsCancellationRequested) {
 
-                _messageQueue.Add(new BuildingEndMessage(group), stoppingToken);
+                _messageQueue.Add(new StageEndMessage("building", group), stoppingToken);
             }
 
         }, stoppingToken);
@@ -147,9 +156,9 @@ public class GameService : BackgroundService {
 
         var info = _playersInfo[message.playerId];
 
-        if (info.state == "building") {
+        if (info.State == "building") {
 
-            _hubContext.Clients.Clients(info.Group!).SendAsync("BlockAdd", info.Login, 
+            _hubContext.Clients.Clients(info.Group!).SendAsync("BlockAdd", info.Login,
                 message.x, message.y, message.z, message.colorId);
         }
     }
@@ -158,15 +167,72 @@ public class GameService : BackgroundService {
 
         var info = _playersInfo[message.playerId];
 
-        if (info.state == "building") {
+        if (info.State == "building") {
 
             _hubContext.Clients.Clients(info.Group!).SendAsync("BlockRemove", info.Login,
                 message.x, message.y, message.z);
         }
     }
 
-    private void HandleBuildingEnd(BuildingEndMessage message) {
+    private void HandleBuildingEnd(StageEndMessage message, CancellationToken stoppingToken) {
 
-        _hubContext.Clients.Clients(message.group).SendAsync("SetState", "evaluation");
+        foreach (var playerId in message.Group) {
+
+            _playersInfo[playerId] = _playersInfo[playerId] with { State = "evaluating", Scores = new() };
+        }
+
+        _hubContext.Clients.Clients(message.Group).SendAsync("SetState", "evaluation");
+        _hubContext.Clients.Clients(message.Group).SendAsync("SetTimer", EVALUATING_TIME);
+
+        Task.Run(async () => {
+
+            await Task.Delay(BUILDING_TIME * 1000, stoppingToken);
+
+            if (!stoppingToken.IsCancellationRequested) {
+
+                _messageQueue.Add(new StageEndMessage("evaluating", message.Group), stoppingToken);
+            }
+
+        }, stoppingToken);
+    }
+
+    private void HandleEvaluated(EvaluatedMessage message) {
+
+        var info = _playersInfo[message.playerId];
+
+        if ((info.State == "evaluating") && (info.Login != message.EvaluatedPlayerLogin)) {
+
+            info.Scores![message.EvaluatedPlayerLogin] = message.Score;
+        }
+    }
+
+    private void HandleEvaluatingEnd(StageEndMessage message) {
+
+        List<PlayerInfo> playersInfo = new();
+
+        foreach (var playerId in message.Group) {
+
+            playersInfo.Add(_playersInfo[playerId]);
+        }
+
+        var best = playersInfo.MaxBy(i => {
+
+            return playersInfo.Sum(j => {
+
+                if (j.Scores!.TryGetValue(i.Login, out int score)) {
+
+                    return score;
+                }
+
+                return 3;
+            });
+        });
+
+        _hubContext.Clients.Clients(message.Group).SendAsync("SetWinner", best!.Login);
+
+        foreach (var playerId in message.Group) {
+
+            _playersInfo.Remove(playerId);
+        }
     }
 }

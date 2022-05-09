@@ -1,8 +1,10 @@
+const connectionStr = 'https://localhost:7208';
+
 class ServerApi {
 
     static async signin(login, password) {
 
-        const response = await fetch('https://localhost:7208/signin', {
+        const response = await fetch(`${connectionStr}/signin`, {
             method: 'POST',
             body : JSON.stringify({
                 mode: 'cors',
@@ -21,7 +23,7 @@ class ServerApi {
 
     static async signup(login, password) {
 
-        const response = await fetch('https://localhost:7208/signup', {
+        const response = await fetch(`${connectionStr}/signup`, {
             method: 'POST',
             body : JSON.stringify({
                 mode: 'cors',
