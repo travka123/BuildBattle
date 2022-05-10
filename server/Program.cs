@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Server.Auth;
 using Server.Data;
-using Server.Data.Models;
+using Server.Models;
 using Server.Game;
 using System.Security.Claims;
 

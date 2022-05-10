@@ -1,16 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
-namespace Server.Data.Models {
+namespace Server.Models;
 
-    [Index(nameof(Login), IsUnique = true)]
-    public class User {
+[Index(nameof(Login), IsUnique = true)]
+public class User {
 
-        [Key]
-        public int Id { get; set; }
+    [Key]
+    public int Id { get; set; }
 
-        public string Login { get; set; } = null!;
+    public string Login { get; set; } = null!;
 
-        public string Password { get; set; } = null!;
-    }
+    public string Password { get; set; } = null!;
 }
+

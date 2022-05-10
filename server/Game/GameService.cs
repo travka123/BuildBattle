@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Server.Data;
 using Server.Game.Messages;
 using System.Collections.Concurrent;
 
@@ -7,16 +8,19 @@ namespace Server.Game;
 public class GameService : BackgroundService {
 
     public const int GROUP_SIZE = 1;
-    const int BUILDING_TIME = 2;
-    const int EVALUATING_TIME = 2;
+    const int BUILDING_TIME = 15;
+    const int EVALUATING_TIME = 15;
 
-    private IHubContext<GameHub> _hubContext;
-    private BlockingCollection<GameMessage> _messageQueue;
+    private readonly IHubContext<GameHub> _hubContext;
+    private readonly BlockingCollection<GameMessage> _messageQueue;
 
-    public GameService(IHubContext<GameHub> hubContext, IGameMessageQueue messageQueue) {
+    private readonly IServiceScopeFactory _scopeFactory;
+
+    public GameService(IHubContext<GameHub> hubContext, IGameMessageQueue messageQueue, IServiceScopeFactory scopeFactory) {
 
         _hubContext = hubContext;
         _messageQueue = messageQueue.MessageQueue;
+        _scopeFactory = scopeFactory;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken) {
@@ -111,6 +115,8 @@ public class GameService : BackgroundService {
         }
     }
 
+    private readonly Random _random = new();
+
     private void HandleGroupFormed(List<string> group, CancellationToken stoppingToken) {
 
         var groupPlayersInfo = new List<(string, PlayerInfo)>();
@@ -126,8 +132,16 @@ public class GameService : BackgroundService {
             groupPlayersInfo.Add((userId, info));
         }
 
-        _hubContext.Clients.Clients(group).SendAsync("SetState", "building");
-        _hubContext.Clients.Clients(group).SendAsync("SetTimer", BUILDING_TIME);
+        using (var scope = _scopeFactory.CreateScope()) {
+
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var count = dbContext.Themes.Count();
+
+            var theme = dbContext.Themes.Skip(_random.Next() % count).Take(1).Single();
+
+            _hubContext.Clients.Clients(group).SendAsync("SetTheme", theme.Name);
+        }
 
         var logins = new List<string>();
 
@@ -139,6 +153,9 @@ public class GameService : BackgroundService {
         }
 
         _hubContext.Clients.Clients(group).SendAsync("SetPlayers", logins);
+
+        _hubContext.Clients.Clients(group).SendAsync("SetState", "building");
+        _hubContext.Clients.Clients(group).SendAsync("SetTimer", BUILDING_TIME);
 
         Task.Run(async () => {
 

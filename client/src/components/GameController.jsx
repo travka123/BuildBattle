@@ -26,6 +26,8 @@ const GameController = ({jwt}) => {
 
     const [winner, setWinner] = useState('');
 
+    const [theme, setTheme] = useState('');
+
     useEffect(() => {
 
         const connection = new signalR.HubConnectionBuilder()
@@ -123,6 +125,13 @@ const GameController = ({jwt}) => {
                 console.log(winner);
             });
 
+            connection.on("SetTheme", (theme) => {
+
+                setTheme(theme);
+
+                console.log(theme);
+            });
+
             await connection.start();
 
             connectionRef.current = connection;
@@ -183,7 +192,11 @@ const GameController = ({jwt}) => {
 
             {
                 state === 'waiting' ? <Waiting current={currentConnected} target={targetConnected}/> :
-                state === 'building' ? <Editor onBlockAdd={onBlockAdd} onBlockRemove={onBlockRemove} style={{width: '100vw', height: '100vh'}} /> :
+                state === 'building' ? 
+                    <div>
+                        <Editor onBlockAdd={onBlockAdd} onBlockRemove={onBlockRemove} style={{width: '100vw', height: '100vh'}} />
+                        <div style={{position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)'}}><h3>{theme}</h3></div>
+                    </div> :
                 state === 'evaluation' ? 
                     <div>
                         <Viewer blocks={worlds[players[currentEvaluating]]} style={{width: '100vw', height: '100vh'}}/>
@@ -193,12 +206,14 @@ const GameController = ({jwt}) => {
                             <EvaluationBar rating={marks[players[currentEvaluating]]} setSelected={evaluated} style={{position: 'absolute', top: '40px', left: '40px'}}/> :
                             null}
                         <h2 style={{position: 'absolute', top: '150px', left: '40px'}}>{players[currentEvaluating]}</h2>
+                        <div style={{position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)'}}><h3>{theme}</h3></div>
                     </div> :
                 state === 'ended' ? 
                     <div>
                         <Viewer blocks={worlds[winner]} style={{width: '100vw', height: '100vh'}}/>
                         <div style={{position: 'absolute', top: '40px', left: '50%', transform: 'translateX(-50%)'}}><h3>WINNER</h3></div>
                         <div style={{position: 'absolute', top: '80px', left: '50%', transform: 'translateX(-50%)'}}><h2>{winner}</h2></div>
+                        <div style={{position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)'}}><h3>{theme}</h3></div>
                     </div> :
                 <div style={{width: '100vw', height: '100vh', backgroundColor: 'lightblue', overflow: 'hidden'}}/>}
 
