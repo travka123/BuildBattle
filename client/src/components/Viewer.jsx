@@ -45,10 +45,10 @@ const Viewer = ({style, blocks}) => {
     }, [blocks]);
 
     return (
-        <div className="Viewer">
-            <div className="overflow-hidden" style={{userSelect: 'none', ...style}}>
+        <div className="Viewer" style={style}>
+            <div className="overflow-hidden" style={{userSelect: 'none', width: '100%', height: '100%'}}>
 
-                <canvas ref={canvasRef} className="w-100 h-100"/>
+                <canvas ref={canvasRef} className="w-100 h-100" />
 
             </div>
         </div>

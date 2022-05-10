@@ -42,6 +42,8 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddSingleton<IGameMessageQueue, GameMessageQueue>();
 
+builder.Services.AddSingleton<IWinnersGalleryService, WinnersGalleryService>();
+
 builder.Services.AddHostedService<GameService>();
 
 var app = builder.Build();
@@ -144,6 +146,8 @@ app.MapGet("/history", [Authorize] async (ClaimsPrincipal claimsPrincipal, [From
 });
 
 app.MapHub<GameHub>("/game");
+
+app.MapHub<GalleryHab>("/gallery");
 
 AppDbContext.Refresh(connectionString);
 AppDbContext.Fill(connectionString);

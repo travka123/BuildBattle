@@ -8,19 +8,24 @@ namespace Server.Game;
 
 public class GameService : BackgroundService {
 
-    public const int GROUP_SIZE = 2;
-    const int BUILDING_TIME = 2;
-    const int EVALUATING_TIME = 2;
+    public const int GROUP_SIZE = 1;
+    const int BUILDING_TIME = 4;
+    const int EVALUATING_TIME = 4;
 
     private readonly IHubContext<GameHub> _hubContext;
     private readonly BlockingCollection<GameMessage> _messageQueue;
+    private readonly IWinnersGalleryService _winnersGalleryService;
+    private readonly IHubContext<GalleryHab> _winnersGalleryHubContext;
 
     private readonly IServiceScopeFactory _scopeFactory;
 
-    public GameService(IHubContext<GameHub> hubContext, IGameMessageQueue messageQueue, IServiceScopeFactory scopeFactory) {
+    public GameService(IHubContext<GameHub> hubContext, IGameMessageQueue messageQueue,
+        IWinnersGalleryService winnersGalleryService, IHubContext<GalleryHab> winnersGalleryHubContext, IServiceScopeFactory scopeFactory) {
 
         _hubContext = hubContext;
         _messageQueue = messageQueue.MessageQueue;
+        _winnersGalleryService = winnersGalleryService;
+        _winnersGalleryHubContext = winnersGalleryHubContext;
         _scopeFactory = scopeFactory;
     }
 
@@ -126,7 +131,7 @@ public class GameService : BackgroundService {
 
             var login = _playersInfo[userId].Login;
 
-            var info = new PlayerInfo("building", login, group);
+            var info = new PlayerInfo("building", login, group, World: new());
 
             _playersInfo[userId] = info;
 
@@ -178,6 +183,8 @@ public class GameService : BackgroundService {
 
         if (info.State == "building") {
 
+            info.World![(message.x, message.y, message.z)] = message.colorId;
+
             _hubContext.Clients.Clients(info.Group!).SendAsync("BlockAdd", info.Login,
                 message.x, message.y, message.z, message.colorId);
         }
@@ -188,6 +195,8 @@ public class GameService : BackgroundService {
         var info = _playersInfo[message.playerId];
 
         if (info.State == "building") {
+
+            info.World!.Remove((message.x, message.y, message.z));
 
             _hubContext.Clients.Clients(info.Group!).SendAsync("BlockRemove", info.Login,
                 message.x, message.y, message.z);
@@ -235,7 +244,7 @@ public class GameService : BackgroundService {
             playersInfo.Add(_playersInfo[playerId]);
         }
 
-        var best = playersInfo.MaxBy(i => {
+        var bestPlayer = playersInfo.MaxBy(i => {
 
             return playersInfo.Sum(j => {
 
@@ -248,7 +257,14 @@ public class GameService : BackgroundService {
             });
         });
 
-        _hubContext.Clients.Clients(message.Group).SendAsync("SetWinner", best!.Login);
+        _hubContext.Clients.Clients(message.Group).SendAsync("SetWinner", bestPlayer!.Login);
+
+        var bestWorld = bestPlayer.World!.Select(b => new List<int>() { b.Key.Item1, b.Key.Item2, b.Key.Item3, b.Value }).ToList();
+        var galleryItem = new GalleryItem(bestPlayer.Login, message.Theme, bestWorld);
+
+        _winnersGalleryHubContext.Clients.All.SendAsync("onAdd", galleryItem);
+
+        _winnersGalleryService.Add(galleryItem);
 
         using (var scope = _scopeFactory.CreateScope()) {
 
@@ -268,7 +284,7 @@ public class GameService : BackgroundService {
 
             foreach (var participant in players) {
 
-                participations.Add(new Participation() { user = participant, match = match, isWinner = participant.Login == best.Login });
+                participations.Add(new Participation() { user = participant, match = match, isWinner = participant.Login == bestPlayer.Login });
             }
 
             dbContext.Participations.AddRange(participations);
