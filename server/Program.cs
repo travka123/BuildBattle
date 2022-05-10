@@ -107,6 +107,25 @@ app.MapPost("/signup", async ([FromBody] SignUpData signUpData, [FromServices] A
     return Results.Ok(new { jwt = AuthHelper.CreateToken(user.Login) });
 });
 
+app.MapGet("/stats", [Authorize] async (ClaimsPrincipal claimsPrincipal, [FromServices] AppDbContext dbContext) => {
+
+    var identity = (claimsPrincipal.Identity as ClaimsIdentity)!;
+
+    var user = await dbContext.Users.SingleOrDefaultAsync(u => u.Login == identity.Name);
+
+    if (user is null) {
+
+        return Results.Conflict();
+    }
+
+    var participatons = await dbContext.Participations.Where(p => p.user == user).Include(p => p.match).ToListAsync();
+
+    var totalPlayed = participatons.Count;
+    var totalWins = participatons.Where(p => p.isWinner).Count();
+
+    return Results.Ok(new { played = totalPlayed, wins = totalWins });
+});
+
 app.MapHub<GameHub>("/game");
 
 AppDbContext.Refresh(connectionString);

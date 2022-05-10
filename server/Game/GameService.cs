@@ -1,15 +1,16 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Server.Data;
 using Server.Game.Messages;
+using Server.Models;
 using System.Collections.Concurrent;
 
 namespace Server.Game;
 
 public class GameService : BackgroundService {
 
-    public const int GROUP_SIZE = 1;
-    const int BUILDING_TIME = 15;
-    const int EVALUATING_TIME = 15;
+    public const int GROUP_SIZE = 2;
+    const int BUILDING_TIME = 2;
+    const int EVALUATING_TIME = 2;
 
     private readonly IHubContext<GameHub> _hubContext;
     private readonly BlockingCollection<GameMessage> _messageQueue;
@@ -132,15 +133,17 @@ public class GameService : BackgroundService {
             groupPlayersInfo.Add((userId, info));
         }
 
+        var theme = String.Empty;
+
         using (var scope = _scopeFactory.CreateScope()) {
 
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
             var count = dbContext.Themes.Count();
 
-            var theme = dbContext.Themes.Skip(_random.Next() % count).Take(1).Single();
+            theme = dbContext.Themes.Skip(_random.Next() % count).Take(1).Single().Name;
 
-            _hubContext.Clients.Clients(group).SendAsync("SetTheme", theme.Name);
+            _hubContext.Clients.Clients(group).SendAsync("SetTheme", theme);
         }
 
         var logins = new List<string>();
@@ -163,7 +166,7 @@ public class GameService : BackgroundService {
 
             if (!stoppingToken.IsCancellationRequested) {
 
-                _messageQueue.Add(new StageEndMessage("building", group), stoppingToken);
+                _messageQueue.Add(new StageEndMessage("building", group, theme), stoppingToken);
             }
 
         }, stoppingToken);
@@ -207,7 +210,7 @@ public class GameService : BackgroundService {
 
             if (!stoppingToken.IsCancellationRequested) {
 
-                _messageQueue.Add(new StageEndMessage("evaluating", message.Group), stoppingToken);
+                _messageQueue.Add(message with { Stage = "evaluating" }, stoppingToken);
             }
 
         }, stoppingToken);
@@ -246,6 +249,32 @@ public class GameService : BackgroundService {
         });
 
         _hubContext.Clients.Clients(message.Group).SendAsync("SetWinner", best!.Login);
+
+        using (var scope = _scopeFactory.CreateScope()) {
+
+            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            var theme = dbContext.Themes.Where(x => x.Name == message.Theme).Single();
+
+            var match = new Match() { Date = DateTime.Now, Theme = theme };
+
+            dbContext.Matchs.Add(match);
+
+            var PlayersLogins = playersInfo.Select(p => p.Login);
+
+            var players = dbContext.Users.Where(u => PlayersLogins.Contains(u.Login)).ToList();
+
+            var participations = new List<Participation>();
+
+            foreach (var participant in players) {
+
+                participations.Add(new Participation() { user = participant, match = match, isWinner = participant.Login == best.Login });
+            }
+
+            dbContext.Participations.AddRange(participations);
+
+            dbContext.SaveChanges();
+        }
 
         foreach (var playerId in message.Group) {
 

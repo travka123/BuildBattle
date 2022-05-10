@@ -7,6 +7,8 @@ public class AppDbContext : DbContext {
 
     public DbSet<User> Users { get; set; } = null!;
     public DbSet<Theme> Themes { get; set; } = null!;
+    public DbSet<Participation> Participations { get; set; } = null!;
+    public DbSet<Match> Matchs { get; set; } = null!;
 
     public AppDbContext(DbContextOptions options) : base(options) { }
 
