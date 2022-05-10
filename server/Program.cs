@@ -126,6 +126,23 @@ app.MapGet("/stats", [Authorize] async (ClaimsPrincipal claimsPrincipal, [FromSe
     return Results.Ok(new { played = totalPlayed, wins = totalWins });
 });
 
+app.MapGet("/history", [Authorize] async (ClaimsPrincipal claimsPrincipal, [FromServices] AppDbContext dbContext) => {
+
+    var identity = (claimsPrincipal.Identity as ClaimsIdentity)!;
+
+    var user = await dbContext.Users.SingleOrDefaultAsync(u => u.Login == identity.Name);
+
+    if (user is null) {
+
+        return Results.Conflict();
+    }
+
+    var participatons = await dbContext.Participations.Where(p => p.user == user)
+    .Include(p => p.match).Include(p => p.match.Theme).ToListAsync();
+
+    return Results.Ok(participatons.Select(p => new { theme = p.match.Theme.Name, date = p.match.Date, isWinner = p.isWinner}));
+});
+
 app.MapHub<GameHub>("/game");
 
 AppDbContext.Refresh(connectionString);

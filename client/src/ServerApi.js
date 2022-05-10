@@ -57,6 +57,19 @@ class ServerApi {
 
         return {status: response.status, ...(response.status === 200 ? {stats: (await response.json())} : {})};
     }
+
+    async history() {
+
+        const response = await fetch(`${connectionStr}/history`, {
+            method: 'GET',
+            mode: 'cors',
+            headers: {
+                'Authorization': `Bearer ${this.jwt}`
+            }
+        });
+
+        return {status: response.status, ...(response.status === 200 ? {history: (await response.json())} : {})};
+    }
 }
 
 export default ServerApi;
