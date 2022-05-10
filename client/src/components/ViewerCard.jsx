@@ -7,9 +7,7 @@ const ViewerCard = ({style, canvasStyle, blocks, text}) => {
         <div className="ViewerCard" style={style}>
             <div className="card">
                 <div className="card-body">
-                    <div className="card-title">
-                        {text}
-                    </div>
+                    <h5 className="card-title">{text}</h5>
                     <Viewer style={canvasStyle} blocks={blocks} />
                 </div>     
             </div>         

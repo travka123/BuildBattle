@@ -116,7 +116,7 @@ const Home = () => {
                 style={{position: 'absolute', top: '50vh', maxWidth: '99vw', backgroundColor: 'lightblue'}}>
 
                     {worlds ? worlds.map((item) => <ViewerCard blocks={item.world} key={item.key}
-                        style={{margin: '30px'}} canvasStyle={{width: '22rem', height: '22rem'}} text={`${item.playerName}, ${item.theme}`}/>) : ''}
+                        style={{margin: '30px'}} canvasStyle={{width: '22rem', height: '22rem'}} text={`${item.theme}, ${item.playerName}`}/>) : ''}
             </div>   
         </div>
     );

@@ -19,6 +19,14 @@ const Viewer = ({style, blocks}) => {
 
         viewerRef.current = new VoxelViewer(canvasRef.current, world);
 
+        const onResize = () => {
+            viewerRef.current.updateSize()
+        };
+
+        window.addEventListener('resize', onResize, true);
+
+        return window.removeEventListener('resize', onResize);
+
     }, [center]);
 
     const currentBlocksRef = useRef([]);
