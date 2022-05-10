@@ -33,6 +33,17 @@ const GameController = ({jwt}) => {
 
     useEffect(() => {
 
+        const timer = (time) => {
+
+            setTimeLeft(time)
+     
+            time--;
+            if (time >= 0) {
+    
+                setTimeout(() => timer(time), 1000);
+            }
+        }
+
         const connection = new signalR.HubConnectionBuilder()
             .withUrl('https://localhost:7208/game', {withCredentials: true, accessTokenFactory: () => jwt})
             .build();
@@ -52,16 +63,7 @@ const GameController = ({jwt}) => {
 
             connection.on("SetTimer", (timeInSeconds) => {
 
-                const timer = (time) => {
-
-                    setTimeLeft(time)
-             
-                    time--;
-                    if (time >= 0) {
-            
-                        setTimeout(() => timer(time), 1000);
-                    }
-                }
+                
 
                 timer(timeInSeconds);
             });
@@ -124,7 +126,7 @@ const GameController = ({jwt}) => {
 
                 setWinner(winner);
                 setState('ended');
-
+                timer(6);
                 setTimeout(() => {
 
                     navigate('/', {replace: true});

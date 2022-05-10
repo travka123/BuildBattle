@@ -9,8 +9,8 @@ namespace Server.Game;
 public class GameService : BackgroundService {
 
     public const int GROUP_SIZE = 2;
-    const int BUILDING_TIME = 10;
-    const int EVALUATING_TIME = 10;
+    const int BUILDING_TIME = 20;
+    const int EVALUATING_TIME = 20;
 
     private readonly IHubContext<GameHub> _hubContext;
     private readonly BlockingCollection<GameMessage> _messageQueue;
