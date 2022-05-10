@@ -4,6 +4,7 @@ import Waiting from "../pages/Waiting";
 import Editor from "./Editor";
 import Viewer from "./Viewer";
 import EvaluationBar from "./EvaluationBar";
+import { useNavigate } from "react-router-dom";
 
 const GameController = ({jwt}) => {
 
@@ -27,6 +28,8 @@ const GameController = ({jwt}) => {
     const [winner, setWinner] = useState('');
 
     const [theme, setTheme] = useState('');
+
+    const navigate = useNavigate();
 
     useEffect(() => {
 
@@ -122,6 +125,12 @@ const GameController = ({jwt}) => {
                 setWinner(winner);
                 setState('ended');
 
+                setTimeout(() => {
+
+                    navigate('/', {replace: true});
+
+                }, 6000);
+
                 console.log(winner);
             });
 
@@ -140,7 +149,7 @@ const GameController = ({jwt}) => {
 
         return async () => await connection.stop()
         
-    }, [jwt]);
+    }, [jwt, navigate]);
 
     const onBlockAdd = (position, colorId) => {
 
