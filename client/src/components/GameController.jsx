@@ -33,6 +33,8 @@ const GameController = ({jwt}) => {
 
     useEffect(() => {
 
+        let exists = true;
+
         const timer = (time) => {
 
             setTimeLeft(time)
@@ -129,7 +131,8 @@ const GameController = ({jwt}) => {
                 timer(6);
                 setTimeout(() => {
 
-                    navigate('/', {replace: true});
+                    if (exists)
+                        navigate('/', {replace: true});
 
                 }, 6000);
 
@@ -149,7 +152,14 @@ const GameController = ({jwt}) => {
                        
         })();
 
-        return async () => await connection.stop()
+        return async () => {
+
+            exists = false;
+
+            console.log(exists);
+
+            await connection.stop()
+        };
         
     }, [jwt, navigate]);
 

@@ -87,8 +87,8 @@ const Home = () => {
     }, [token]);
 
     return (
-        <div className="Home" style={{overflowX: 'hidden'}}>
-            <div style={{width: '100vw', height: '100vh', backgroundColor: 'lightblue', overflow: 'hidden'}}>
+        <div className="Home" style={{overflowX: 'hidden', height: '100vh'}}>
+            <div style={{width: '100vw', height: '55%', backgroundColor: 'lightblue', overflow: 'hidden'}}>
                 <div className="card" style={{width: '400px', margin: 'auto', marginTop: '10vh'}}>
                     {stats ?    
                     <div className="d-flex justify-content-around">
@@ -112,11 +112,12 @@ const Home = () => {
                         null}
                 </div>
             </div>
-            <div className="d-flex justify-content-around flex-wrap vertical-scrollable" 
-                style={{position: 'absolute', top: '50vh', maxWidth: '99vw', backgroundColor: 'lightblue'}}>
+            <div style={{overflowX: 'hidden', backgroundColor: 'lightblue', minHeight: '45%'}}>
+                <div className="d-flex justify-content-around flex-wrap vertical-scrollable" >
 
-                    {worlds ? worlds.map((item) => <ViewerCard blocks={item.world} key={item.key}
-                        style={{margin: '30px'}} canvasStyle={{width: '22rem', height: '22rem'}} text={`${item.theme}, ${item.playerName}`}/>) : ''}
+                        {worlds ? worlds.map((item) => <ViewerCard blocks={item.world} key={item.key}
+                            style={{margin: '30px'}} canvasStyle={{width: '22rem', height: '22rem'}} text={`${item.theme}, ${item.playerName}`}/>) : ''}
+                </div>
             </div>   
         </div>
     );
