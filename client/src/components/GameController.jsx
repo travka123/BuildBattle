@@ -156,8 +156,6 @@ const GameController = ({jwt}) => {
 
             exists = false;
 
-            console.log(exists);
-
             await connection.stop()
         };
         

@@ -21,9 +21,7 @@ class ServerApi {
             },
         });
 
-        const data = await response.json();
-
-        return {status: response.status, ...(response.status === 200 ? {token: data.jwt} : {})};
+        return {status: response.status, ...(response.status === 200 ? {token: (await response.json()).jwt} : {})};
     }
 
     static async signup(login, password) {
@@ -40,9 +38,7 @@ class ServerApi {
             },
         });
 
-        const data = await response.json();
-
-        return {status: response.status, ...(response.status === 200 ? {token: data.jwt} : {})};
+        return {status: response.status, ...(response.status === 200 ? {token: (await response.json()).jwt} : {})};
     }
 
     async stats() {
